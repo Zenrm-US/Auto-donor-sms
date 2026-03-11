@@ -3,7 +3,7 @@ name: Auto_donor_sms
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "2,7,12,17,22,27,32,42,47,52,57,* * * *"
 
 jobs:
   run-donor-sms:
