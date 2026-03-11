@@ -1,4 +1,4 @@
-name: Donor SMS Automation
+name: SMS_donation
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run donor SMS script
         env:
