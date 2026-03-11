@@ -1,0 +1,46 @@
+name: Donor SMS Automation
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  run-donor-sms:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run donor SMS script
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NEW_DAYS: ${{ secrets.NEW_DAYS }}
+          MWL_SHORT_API_KEY: ${{ secrets.MWL_SHORT_API_KEY }}
+          MWL_SHORT_API_BASE: ${{ secrets.MWL_SHORT_API_BASE }}
+          TWILIO_SID: ${{ secrets.TWILIO_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_PHONE: ${{ secrets.TWILIO_PHONE }}
+          DRY_RUN: ${{ secrets.DRY_RUN }}
+          MAX_SMS: ${{ secrets.MAX_SMS }}
+          CSV_FILE: ${{ secrets.CSV_FILE }}
+        run: node index.js
+
+      - name: Upload CSV report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: donor-sms-report
+          path: donation_sms_report.csv
+          if-no-files-found: ignore
