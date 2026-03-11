@@ -41,7 +41,7 @@ const client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 
 // Safety controls
 const DRY_RUN = String(process.env.DRY_RUN || "true").toLowerCase() === "true";
-const MAX_SMS = Number(process.env.MAX_SMS || "10");
+const MAX_SMS = Number(process.env.MAX_SMS || "1");
 
 // ---------- CSV OUTPUT ----------
 const CSV_FILE = process.env.CSV_FILE || "donation_sms_report.csv";
