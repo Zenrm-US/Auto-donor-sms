@@ -1,4 +1,4 @@
-name: SMS_donation
+name: Auto_donor_sms
 
 on:
   workflow_dispatch:
