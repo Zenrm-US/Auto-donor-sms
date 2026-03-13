@@ -43,16 +43,18 @@ if (!TWILIO_SID || !TWILIO_AUTH_TOKEN || !TWILIO_FROM) {
 // Twilio client
 const client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 
-// Safety controls
-const DRY_RUN = String(process.env.DRY_RUN || "true").toLowerCase() === "false";
+// ---------- Safety ----------
+const DRY_RUN = String(process.env.DRY_RUN || "true").toLowerCase() === "true";
 
 // ---------- CSV OUTPUT ----------
 const CSV_FILE = process.env.CSV_FILE || "donation_sms_report.csv";
+
 function csvEscape(v) {
   if (v === null || v === undefined) return "";
   const s = String(v);
   return '"' + s.replace(/"/g, '""') + '"';
 }
+
 function initCsvIfNeeded() {
   if (!fs.existsSync(CSV_FILE)) {
     const header = 
@@ -61,32 +63,17 @@ function initCsvIfNeeded() {
     fs.writeFileSync(CSV_FILE, header, "utf8");
   }
 }
+
 function appendCsvRow(row) {
   const line = row.map(csvEscape).join(",") + "\n";
   fs.appendFileSync(CSV_FILE, line, "utf8");
 }
 
 // ---------- RULES ----------
-function isNewDonation(donation) {
-  const rawDate = donation.createdDate || donation.createdAt;
-  if (!rawDate) return false;
-
-  const created = new Date(rawDate);
-  if (Number.isNaN(created.getTime())) return false;
-
-  const now = new Date();
-  const cutoff = new Date(now.getTime() - NEW_DAYS * 24 * 60 * 60 * 1000);
-
-  return created >= cutoff;
-}
 
 function checkEligibility(donation) {
   const stage = (donation.StageName || "").trim().toLowerCase();
   const source = (donation.Donation_Source__c || "").trim().toLowerCase();
-
-  if (!isNewDonation(donation)) {
-    return { ok: false, reason: "not_new" };
-  }
 
   if (stage !== "closed won") {
     return { ok: false, reason: "stage_not_closed_won" };
@@ -241,6 +228,8 @@ userid, phone, "true", "ok", urlType, shortUrl, String(DRY_RUN), ""]);
       to: phone,
     });
 
+    console.log("SMS sent to " + phone + ". SID: " + msg.sid);
+
     await donationsColl.updateOne(
       { _id: donationId },
       {
@@ -301,12 +290,32 @@ async function start() {
         }
       }
 
-      const donation = req.body;
+      const incomingDonation = req.body;
 
-      if (!donation || !donation._id) {
+      if (!incomingDonation || !incomingDonation._id) {
         return res.status(400).json({
           success: false,
           error: "Request body must include a donation object with _id"
+        });
+      }
+
+      let donationObjectId;
+      try {
+        donationObjectId = new ObjectId(incomingDonation._id);
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid donation _id"
+        });
+      }
+
+      const donation = await donationsColl.findOne({ _id: donationObjectId 
+});
+
+      if (!donation) {
+        return res.status(404).json({
+          success: false,
+          error: "Donation not found in database"
         });
       }
 
