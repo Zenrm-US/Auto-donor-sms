@@ -16,8 +16,10 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_FROM = process.env.TWILIO_PHONE;
 if (!TWILIO_SID || !TWILIO_AUTH_TOKEN || !TWILIO_FROM) { console.error("Twilio env vars missing"); process.exit(1); }
 const twilioClient = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
+//----------------DRY OR LIVE MODE------------------------
 const DRY_RUN = true;
 const MAX_SMS = 1000;
+//---------------------------------------------------------
 function getNextCsvFile() {
   const base = process.env.CSV_FILE || "donation_sms_report";
   const baseName = base.replace(/\.csv$/, "");
@@ -88,6 +90,7 @@ async function getMwlShortUrl(userid, donationId) {
   if (!data || data.success !== true || !data.short_url) throw new Error("MWL API failed");
   return data.short_url;
 }
+//---------------THE TEXT MSG------------------------------
 function buildSmsBody(shortUrl) {
   return "Thanks for your donation! Please click the link below to get your receipt. Your donation is tax deductible. " + shortUrl;
 }
@@ -139,6 +142,7 @@ async function main() {
       sent++;
       if (sent >= MAX_SMS) break;
     }
+    //---------------OUTPUT MSG------------------
     console.log("Done. Would send:", sent, "Skipped:", skipped);
   } catch (err) {
     console.error("Error:", err.message);
