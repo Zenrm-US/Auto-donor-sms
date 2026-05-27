@@ -28,7 +28,7 @@ const twilioClient = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 // ─── DRY RUN CONF─────────────────────────────────────────────────────────
 //  DRY_RUN = true  → no real SMS sent,
 //  DRY_RUN = false → live mode
-const DRY_RUN = false;
+const DRY_RUN = true;
 const MAX_SMS = 100;
 
 // ─── CSV SETU──────────────────────────────────────────────────────────────
