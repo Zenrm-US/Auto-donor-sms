@@ -47,7 +47,7 @@ function getNextCsvFile() {
 const CSV_FILE = getNextCsvFile();
 console.log("─────────────────────────────────────────────");
 console.log("CSV file:", CSV_FILE);
-console.log("Mode:", DRY_RUN ? "DRY RUN (no real SMS will be sent)" : "⚠️  LIVE — real SMS will be sent");
+console.log("Mode:", DRY_RUN ? "DRY RUN (no real SMS will be sent)" : "LIVE — real SMS will be sent");
 console.log("─────────────────────────────────────────────\n");
 
 function csvEscape(v) {
@@ -70,8 +70,7 @@ function appendCsvRow(row) {
   fs.appendFileSync(CSV_FILE, line, "utf8");
 }
 
-// ─── DATE HELP──────────────────────────────────────────
-// FIX 1: unwrap MongoDB Extended JSON { "$date": "..." } before parsing
+// ─── DATE ──────────────────────────
 function resolveDate(raw) {
   if (!raw) return null;
   if (typeof raw === "object" && raw.$date) return new Date(raw.$date); return new Date(raw);}
