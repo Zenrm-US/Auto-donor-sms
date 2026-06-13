@@ -26,8 +26,8 @@ console.error("Twilio env vars missing"); process.exit(1); }
 const twilioClient = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 
 // ─── DRY RUN CONF─────────────────────────────────────────────────────────
-//  DRY_RUN = true  → no real SMS sent,
-//  DRY_RUN = false → live mode
+//  DRY_RUN = true  → no real SMS sent, full console + CSV output still works
+//  DRY_RUN = false → live mode, real SMS will be sent
 const DRY_RUN = false;
 const MAX_SMS = 100;
 
@@ -70,13 +70,13 @@ function appendCsvRow(row) {
   fs.appendFileSync(CSV_FILE, line, "utf8");
 }
 
-// ─── DATE HELP─────────────────────────────────────────────────────────────
+// ─── DATE HELP──────────────────────────────────────────
 // FIX 1: unwrap MongoDB Extended JSON { "$date": "..." } before parsing
 function resolveDate(raw) {
   if (!raw) return null;
   if (typeof raw === "object" && raw.$date) return new Date(raw.$date); return new Date(raw);}
 
-// ─── ELIGIBILI─────────────────────────────────────────────────────────────
+// ─── ELIGIBILIty──────────────────────────────────────────
 function isNewDonation(donation) {
   const created = resolveDate(donation.CloseDate);
   if (!created || Number.isNaN(created.getTime())) return false;
@@ -104,7 +104,7 @@ reason: "excluded_contact" };
   return { ok: true };
 }
 
-// ─── URL HELPER─────────────────────────────────────────────────────────────
+// ─── URL HELPER────────────────────────────────────────
 function buildLongUpdateLink(donation, contact) {
   const base       = "https://mwl.org/update-address/";
   const donationId = donation?._id ? donation._id.toString() : "";
@@ -131,7 +131,7 @@ Error("MWL API failed");
   return data.short_url;
 }
 
-// ─── SMS BOD─────────────────────────────────────────────────────────────────
+// ─── SMS BOD────────────────────────────────
 function buildSmsBody(shortUrl) {
   return (
     "Thanks for your donation! Please click the link below to get your receipt. " +
@@ -139,7 +139,7 @@ function buildSmsBody(shortUrl) {
   );
 }
 
-// ─── MA─────────────────────────────────────────────────────────────────────
+// ─── MA────────────────────────────────────
 async function main() {
   initCsv();
 
@@ -152,11 +152,18 @@ async function main() {
     const db            = clientMongo.db(DB_NAME);
     const donationsColl = db.collection("donations");
     const contactsColl  = db.collection("contacts");
+    const todayStart = new Date();
+    todayStart.setDate(todayStart.getDate() - 7);
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
 
     const cursor = donationsColl.find({
       StageName:            "Closed Won",
       Donation_Source__c:   "Fundraising App",
       smsSent:              { $ne: true },
+      CloseDate:          { $gte: todayStart, $lte: todayEnd },
     });
 
     let sent    = 0;
@@ -166,7 +173,7 @@ async function main() {
       const donation   = await cursor.next();
       const donationId = donation._id.toString();
 
-      // ── Eligibility check ─────────────────────────────────────────────
+      // ── Eligibility check ─────────────────────────────
       const eligibility = checkEligibility(donation);
       if (!eligibility.ok) {
         console.log(`[SKIP] ${donationId} | reason: ${eligibility.reason} 
@@ -177,7 +184,7 @@ donation.contact, "", "", "no", eligibility.reason, "", "", DRY_RUN, ""]);
         continue;
       }
 
-      // ── Contact lookup ─────────────────────────────────────────────────
+      // ── Contact lookup ─────────────────────────────
       const contact = await contactsColl.findOne({ _id: new 
 ObjectId(donation.contact) });
       if (!contact) {
@@ -230,7 +237,7 @@ donation.contact, "", "", "no", "no_salesforceID", "", "", DRY_RUN, ""]);
         continue;
       }
 
-      // ── Build URL (short → fallback to long) ───────────────────────────
+      // ── Build URL───────────────────────────
       let url;
       let urlType;
       try {
@@ -297,7 +304,7 @@ Stopping.`);
       }
     }
 
-    // ── Summary──
+    // ── Summary───────────────────────────────────────────────────────────
     
 console.log("\n─────────────────────────────────────────────");
    console.log("SUMMARY");
