@@ -52,7 +52,7 @@ const DRY_RUN = false;
 
 const MAX_SMS = 100;
 
-const INTERVAL_MS = 30 * 1000;
+const INTERVAL_MS = 30 * 60 * 1000;
 
 
 
