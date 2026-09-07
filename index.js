@@ -208,22 +208,21 @@ function buildLongUpdateLink(donation, contact) {
 
 
 
+// Confirmed via testing: this endpoint expects auth as a query param, not a header.
 async function getMwlShortUrl(userid, donationId) {
-
-  const { data } = await axios.get(MWL_SHORT_API_BASE, {
-
+  const { data, status } = await axios.get(MWL_SHORT_API_BASE, {
     params: { auth: MWL_SHORT_API_KEY, userid, donation: donationId },
-
     timeout: 15000,
-
     validateStatus: () => true,
-
   });
 
-  if (!data || data.success !== true || !data.short_url) throw new Error("MWL API failed");
-
+  if (status === 401 || status === 403) {
+    throw new Error(`MWL API auth failed (status ${status}): ${JSON.stringify(data)}`);
+  }
+  if (!data || data.success !== true || !data.short_url) {
+    throw new Error(`MWL API failed (status ${status}): ${JSON.stringify(data)}`);
+  }
   return data.short_url;
-
 }
 
 
@@ -385,24 +384,16 @@ async function runOnce() {
       }
 
 
-
-      let url;
-
-      let urlType;
-
-      try {
-
-        url = await getMwlShortUrl(userid, donationId);
-
-        urlType = "short";
-
-      } catch (e) {
-
-        url = buildLongUpdateLink(donation, contact);
-
-        urlType = "long";
-
-      }
+let url;
+let urlType;
+try {
+  url = await getMwlShortUrl(userid, donationId);
+  urlType = "short";
+} catch (e) {
+  console.error("[WARN] Short URL failed, falling back to long URL. Reason:", e.message);
+  url = buildLongUpdateLink(donation, contact);
+  urlType = "long";
+}
 
 
 
