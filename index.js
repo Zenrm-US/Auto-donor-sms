@@ -48,7 +48,7 @@ const twilioClient = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 
 
 
-const DRY_RUN = false;
+const DRY_RUN = True;
 
 const MAX_SMS = 100;
 
