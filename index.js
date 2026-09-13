@@ -23,7 +23,7 @@ if (!TWILIO_SID || !TWILIO_AUTH_TOKEN || !TWILIO_FROM) { console.error("Twilio e
 
 const twilioClient = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 
-const DRY_RUN = true; // set to false only after a successful dry run
+const DRY_RUN = false; // set to false only after a successful dry run
 const MAX_SMS = 100;
 const INTERVAL_MS = 30 * 1000;
 
